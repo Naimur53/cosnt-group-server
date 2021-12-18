@@ -25,6 +25,7 @@ async function run() {
         await client.connect();
         const database = client.db("group_info");
         const userPostCollection = database.collection("userPost");
+        const usersCollection = database.collection("user");
         app.get('/:email/myPost', async (req, res) => {
             console.log(req.body, req.params)
             console.log('hit');
@@ -152,6 +153,34 @@ async function run() {
             console.log(result);
             res.json(data)
         })
+        app.post('/user', async (req, res) => {
+            const user = req.body;
+            console.log('post user');
+            const result = await usersCollection.insertOne(user);
+            res.json(result);
+            console.log(result);
+        });
+        //make admin
+        app.put('/user/makeAdmin', async (req, res) => {
+            console.log('user put');
+            const email = req?.body?.email
+            console.log(email);
+            const filter = { email };
+            const options = { upsert: true }
+            const updateDoc = { $set: { role: 'admin' } }
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+        })
+
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin });
+        });
 
     } finally {
         // await client.close();
