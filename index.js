@@ -7,6 +7,9 @@ const fileUpload = require('express-fileupload');
 const { MongoClient } = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
 
+// f
+
+
 //middle war
 
 app.use(cors())
@@ -18,14 +21,14 @@ app.use(fileUpload());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.icikx.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-// main
-
+// main 
 async function run() {
     try {
         await client.connect();
         const database = client.db("group_info");
         const userPostCollection = database.collection("userPost");
         const usersCollection = database.collection("user");
+        const groupCollection = database.collection('group');
         app.get('/:email/myPost', async (req, res) => {
             console.log(req.body, req.params)
             console.log('hit');
@@ -49,16 +52,16 @@ async function run() {
             res.json(result)
 
         })
-        app.get('/userPost/:postName', async (req, res) => {
-            const postName = req.params.postName;
-            console.log('type of post', postName);
+        app.get('/userPost', async (req, res) => {
+            const postPath = req?.query;
+            console.log('type of post', postPath);
             const query = {
-                postIn: '/' + postName
+                postIn: '/' + postPath.gpId + '/' + postPath.postIn
             }
             console.log(query);
             const outPut = await userPostCollection.find(query).toArray();
             const result = await outPut.reverse()
-            console.log('get from db');
+            console.log('get from db', result);
             res.json(result);
         })
         app.post('/userPost', async (req, res) => {
@@ -150,9 +153,18 @@ async function run() {
             }
             console.log(filter);
             const result = await userPostCollection.updateOne(filter, updateDoc);
-            console.log(result);
             res.json(data)
         })
+        app.put('/user', async (req, res) => {
+            const user = req.body;
+            console.log('put user', user);
+            const filter = { email: user.email };
+            const options = { upsert: true }
+            const updateDoc = { $set: user }
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+            console.log(result);
+        });
         app.post('/user', async (req, res) => {
             const user = req.body;
             console.log('post user');
@@ -169,6 +181,27 @@ async function run() {
             const options = { upsert: true }
             const updateDoc = { $set: { role: 'admin' } }
             const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        });
+        //  all about  groups
+        app.post('/createGroup', async (req, res) => {
+            console.log(req.body);
+            const data = req.body;
+            const result = await groupCollection.insertOne(data);
+            res.json(result)
+        })
+        app.get('/allGroup', async (req, res) => {
+            const result = await groupCollection.find({}).toArray();
+            console.log(result);
+            res.json(result)
+        })
+        app.get('/group/:id', async (req, res) => {
+            const _id = req.params.id
+            console.log(_id);
+            const query = { _id: ObjectId(_id) }
+            const result = await groupCollection.findOne(query);
+            console.log(result);
+            res.json(result)
         })
 
         app.get('/user/:email', async (req, res) => {
@@ -180,6 +213,16 @@ async function run() {
                 isAdmin = true;
             }
             res.json({ admin: isAdmin });
+        });
+        app.get('/userInfo/:email', async (req, res) => {
+            const email = req.params.email;
+            const making = await usersCollection.createIndex({ email: 'text' })
+            const c = await usersCollection.getIndexes()
+            const query = { $text: { $search: email } }
+            const users = await usersCollection.find(query).toArray();
+            console.log('searching user ', users);
+
+            res.json(users);
         });
 
     } finally {
