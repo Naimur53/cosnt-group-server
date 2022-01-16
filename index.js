@@ -216,13 +216,20 @@ async function run() {
         });
         app.get('/userInfo/:email', async (req, res) => {
             const email = req.params.email;
-            const making = await usersCollection.createIndex({ email: 'text' })
-            const c = await usersCollection.getIndexes()
-            const query = { $text: { $search: email } }
-            const users = await usersCollection.find(query).toArray();
-            console.log('searching user ', users);
-
+            console.log(email);
+            const query = { email }
+            const users = await usersCollection.findOne(query);
             res.json(users);
+        });
+        app.put('/addUserToGroup', async (req, res) => {
+            const data = req.body;
+            console.log(data);
+            // const query = { email }
+            const filter = { _id: ObjectId(data.gpId) }
+            const doc = { $push: { members: data?.user } }
+            const result = await groupCollection.updateOne(filter, doc);
+            console.log(result);
+            res.json(data);
         });
 
     } finally {
