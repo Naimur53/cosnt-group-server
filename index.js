@@ -69,6 +69,7 @@ async function run() {
             const pic = req?.files?.pic;
             data.client = JSON.parse(data.client);
             const picData = pic?.data;
+            console.log(pic);
             data.loves = [];
             data.comments = [];
             console.log(data);
@@ -79,10 +80,21 @@ async function run() {
             }
             else {
                 delete data.pic
-                console.log('hghghghghghg');
             }
             const result = await userPostCollection.insertOne(data);
             res.json(result);
+            console.log('post the data');
+        });
+        app.post('/convertImg', async (req, res) => {
+            const pic = req?.files?.pic;
+            const picData = pic?.data;
+            console.log(pic);
+            const encodedPic = picData.toString('base64');
+            const imageBuffer = Buffer.from(encodedPic, 'base64');
+            const mainImgString = imageBuffer.toString('base64');
+
+            console.log('hghghghghghg', mainImgString);
+            res.json(mainImgString);
             console.log('post the data');
         })
         app.put('/userPost/love', async (req, res) => {
@@ -189,7 +201,27 @@ async function run() {
             const data = req.body;
             const result = await groupCollection.insertOne(data);
             res.json(result)
-        })
+        });
+        app.delete('/deleteGroup/:gpId', async (req, res) => {
+            console.log(req.params?.gpId, 'delete gropup');
+            const _id = req.params?.gpId;
+            const query = { _id: ObjectId(_id) }
+            const result = await groupCollection.deleteOne(query);
+            const help = {
+                postIn: '/' + _id + '/help'
+            }
+            const announcement = {
+                postIn: '/' + _id + '/announcement'
+            }
+            const discussion = {
+                postIn: '/' + _id + '/discussion'
+            }
+            const deleteHelp = await userPostCollection.deleteMany(help);
+            const deleteAnnounce = await userPostCollection.deleteMany(announcement);
+            const deleteDiscuss = await userPostCollection.deleteMany(discussion);
+            console.log(result, deleteHelp, deleteAnnounce, deleteDiscuss);
+            res.json({ _id })
+        });
         app.get('/allGroup', async (req, res) => {
             const result = await groupCollection.find({}).toArray();
             console.log(result);
@@ -224,14 +256,73 @@ async function run() {
         app.put('/addUserToGroup', async (req, res) => {
             const data = req.body;
             console.log(data);
-            // const query = { email }
             const filter = { _id: ObjectId(data.gpId) }
             const doc = { $push: { members: data?.user } }
-            const result = await groupCollection.updateOne(filter, doc);
+            const options = { upsert: true };
+            const result = await groupCollection.updateOne(filter, doc, options)
             console.log(result);
             res.json(data);
         });
-
+        app.put('/removeUserFromGroup', async (req, res) => {
+            const data = req.body;
+            console.log(data);
+            const filter = { _id: ObjectId(data.gpId) }
+            const doc = { $pull: { members: data.user } }
+            const options = { upsert: true };
+            const result = await groupCollection.updateOne(filter, doc, options)
+            console.log(result);
+            res.json(data);
+        });
+        app.put('/makeGroupAdmin', async (req, res) => {
+            const data = req.body;
+            console.log(data);
+            const filter = { _id: ObjectId(data.gpId) }
+            const doc = { $push: { admin: data?.user } }
+            const options = { upsert: true };
+            const result = await groupCollection.updateOne(filter, doc, options)
+            console.log(result);
+            res.json(data);
+        });
+        app.put('/removeAdminOfGroup', async (req, res) => {
+            const data = req.body;
+            console.log(data);
+            const filter = { _id: ObjectId(data.gpId) }
+            const doc = { $pull: { admin: data.user } }
+            const options = { upsert: true };
+            const result = await groupCollection.updateOne(filter, doc, options)
+            console.log(result);
+            res.json(data);
+        });
+        app.put('/sendRequest', async (req, res) => {
+            const data = req.body;
+            console.log(data);
+            const filter = { _id: ObjectId(data.gpId) }
+            const doc = { $push: { memberRequest: data?.user } }
+            const options = { upsert: true };
+            const result = await groupCollection.updateOne(filter, doc, options)
+            console.log(result);
+            res.json(data);
+        });
+        app.put('/cancelRequest', async (req, res) => {
+            const data = req.body;
+            console.log(data);
+            const filter = { _id: ObjectId(data.gpId) }
+            const doc = { $pull: { memberRequest: data?.user } }
+            const options = { upsert: true };
+            const result = await groupCollection.updateOne(filter, doc, options)
+            console.log(result);
+            res.json(data);
+        });
+        app.put('/acceptRequest', async (req, res) => {
+            const data = req.body;
+            console.log(data);
+            const filter = { _id: ObjectId(data.gpId) }
+            const doc = { $push: { members: data?.user } }
+            const options = { upsert: true };
+            const result = await groupCollection.updateOne(filter, doc, options)
+            console.log(result,);
+            res.json(data);
+        });
     } finally {
         // await client.close();
     }
