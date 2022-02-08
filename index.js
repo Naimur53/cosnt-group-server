@@ -55,14 +55,14 @@ async function run() {
         app.get('/userPost', async (req, res) => {
             const postPath = req?.query;
             console.log('type of post', postPath);
+            const skip = parseInt(postPath.skip);
             const query = {
                 postIn: '/' + postPath.gpId + '/' + postPath.postIn
             }
             console.log(query);
-            const outPut = await userPostCollection.find(query).toArray();
-            const result = await outPut.reverse()
-            console.log('get from db', result);
-            res.json(result);
+            const cursor = await userPostCollection.find(query);
+            const outPut = await cursor.sort({ _id: -1 }).skip(skip).limit(7).toArray();
+            res.json(outPut);
         })
         app.post('/userPost', async (req, res) => {
             const data = req.body;
@@ -82,7 +82,7 @@ async function run() {
                 delete data.pic
             }
             const result = await userPostCollection.insertOne(data);
-            res.json(result);
+            res.json(data);
             console.log('post the data');
         });
         app.post('/convertImg', async (req, res) => {
