@@ -349,7 +349,7 @@ run().catch(console.dir);
 
 // defaults
 app.get("/", async (req, res) => {
-  res.send(`const group server is runing  hi ${process.env.DB_PASS}`);
+  res.send(`const group server is running`);
 });
 app.listen(port, () => {
   console.log("server is running at port", port);
