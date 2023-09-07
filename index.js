@@ -31,6 +31,9 @@ async function run() {
     const userPostCollection = database.collection("userPost");
     const usersCollection = database.collection("user");
     const groupCollection = database.collection("group");
+    app.get("/test", async (req, res) => {
+      res.json({ s: "hi", env: process.env });
+    });
     app.get("/:email/myPost", async (req, res) => {
       console.log(req.body, req.params);
       console.log("hit");
