@@ -347,7 +347,7 @@ async function run() {
 }
 run().catch(console.dir);
 
-// default
+// defaults
 app.get("/", async (req, res) => {
   res.send(`const group server is runing  hi ${process.env.DB_PASS}`);
 });
