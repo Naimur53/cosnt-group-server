@@ -349,7 +349,7 @@ run().catch(console.dir);
 
 // default
 app.get("/", async (req, res) => {
-  res.send("const group server is runing  ");
+  res.send("const group server is runing  hi");
 });
 app.listen(port, () => {
   console.log("server is running at port", port);
